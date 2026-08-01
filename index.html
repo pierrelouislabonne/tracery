@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracery</title>
+<style>
+  :root{
+    --bg:#f1efe9;
+    --panel:#fcfbf9;
+    --ink:#2e2e33;
+    --ink-soft:#8a8a90;
+    --line:#e4e2da;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{height:100%}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;
+    padding:24px 16px 40px;min-height:100%;
+  }
+  header{
+    width:100%;max-width:860px;
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:14px;gap:12px;flex-wrap:wrap;
+  }
+  h1{font-size:15px;font-weight:600;letter-spacing:.02em}
+  h1 span{color:var(--ink-soft);font-weight:400}
+  .seed-line{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--ink-soft)}
+  .stage{
+    width:100%;max-width:860px;
+    flex-shrink:0;
+    aspect-ratio:1/1;
+    border:1px solid var(--line);border-radius:4px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px -18px rgba(40,40,45,.3);
+    overflow:hidden;position:relative;background:#0e0e10;
+  }
+  canvas{display:block;width:100%;height:100%;cursor:pointer}
+  .hint{
+    position:absolute;right:10px;bottom:8px;
+    font-size:10px;color:#6a6a70;
+    font-family:ui-monospace,monospace;
+    opacity:.8;pointer-events:none;transition:opacity .4s;
+  }
+  .controls{
+    width:100%;max-width:860px;
+    flex-shrink:0;
+    display:flex;flex-wrap:wrap;gap:18px 28px;
+    align-items:flex-end;margin-top:16px;
+    padding:14px 16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:4px;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;min-width:110px;flex:1}
+  .field.small{flex:0 0 auto;min-width:0}
+  label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);font-weight:600}
+  select{
+    appearance:none;font-family:inherit;font-size:12px;color:var(--ink);
+    padding:7px 28px 7px 10px;border:1px solid #d9d7cf;border-radius:3px;
+    background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%232e2e33'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor:pointer;
+  }
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:2px;background:#d9d7cf;border-radius:1px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:13px;height:13px;border-radius:50%;
+    background:var(--panel);border:1.5px solid var(--ink);cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--panel);border:1.5px solid var(--ink);cursor:pointer;
+  }
+  .check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);padding-bottom:2px}
+  .check input{accent-color:var(--ink)}
+  .actions{display:flex;gap:8px;margin-left:auto}
+  .btn{
+    appearance:none;font-family:inherit;font-size:12px;
+    padding:8px 16px;border-radius:3px;cursor:pointer;
+    border:1px solid var(--ink);background:var(--ink);color:var(--panel);
+    letter-spacing:.02em;
+  }
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn:active{transform:translateY(1px)}
+  @media (max-width:640px){
+    .actions{margin-left:0;width:100%}
+    .btn{flex:1}
+  }
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tracery <span>· generative geometric marks</span></h1>
+  <div class="seed-line" id="seedLine">seed —</div>
+</header>
+
+<div class="stage">
+  <canvas id="c" width="1440" height="1440" aria-label="Marque géométrique générée"></canvas>
+  <div class="hint" id="hint">clic = nouvelle marque</div>
+</div>
+
+<div class="controls">
+  <div class="field small">
+    <label>Règle</label>
+    <select id="rule">
+      <option value="auto" selected>Auto</option>
+      <option value="tangent">Tangent</option>
+      <option value="concentrique">Concentrique</option>
+      <option value="trefle">Trèfle</option>
+      <option value="trainee">Traînée</option>
+      <option value="rotation">Rotation</option>
+      <option value="inscrit">Inscrit</option>
+      <option value="orbite">Orbite</option>
+      <option value="empilement">Empilement</option>
+      <option value="demi">Demi-cercles</option>
+      <option value="grille">Grille</option>
+      <option value="rayons">Rayons</option>
+      <option value="hachures">Hachures</option>
+      <option value="chevrons">Chevrons</option>
+      <option value="faisceau">Faisceau</option>
+      <option value="horizon">Horizon</option>
+      <option value="ellipses">Ellipses</option>
+      <option value="lune">Lune</option>
+    </select>
+  </div>
+  <div class="field small">
+    <label>Thème</label>
+    <div class="check"><input type="checkbox" id="dark" checked><span>Sombre</span></div>
+  </div>
+  <div class="field small">
+    <label>Fond</label>
+    <div class="check"><input type="checkbox" id="grid" checked><span>Grille</span></div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" id="dlsvg">SVG</button>
+    <button class="btn ghost" id="dlpng">PNG</button>
+    <button class="btn" id="regen">Générer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const TAU = Math.PI*2;
+
+  // ---------- PRNG seedé ----------
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  let seed = (Math.random()*1e9)|0;
+  let rnd = mulberry32(seed);
+  const R  = (a,b)=> a + rnd()*(b-a);
+  const RI = (a,b)=> Math.floor(R(a,b+1));
+  const pick = arr => arr[RI(0, arr.length-1)];
+
+  // ---------- Primitives ----------
+  const circle = (cx,cy,r) => ({kind:'ellipse', cx, cy, rx:r, ry:r});
+  const ellipse = (cx,cy,rx,ry) => ({kind:'ellipse', cx, cy, rx, ry});
+  const arc = (cx,cy,r,a0,a1) => ({kind:'arc', cx, cy, r, a0, a1});
+  function regPoly(cx,cy,r,sides,rot){
+    const pts = [];
+    for(let i=0;i<sides;i++){
+      const a = rot + i/sides*TAU;
+      pts.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r]);
+    }
+    return {kind:'poly', pts};
+  }
+  // triangle pointe en haut, carré à plat, losange, pentagone, hexagone
+  const BASE_ROT = {3:-Math.PI/2, 4:Math.PI/4, 5:-Math.PI/2, 6:0, 8:Math.PI/8};
+  const line = (x1,y1,x2,y2) => ({kind:'line', x1, y1, x2, y2});
+  const stade = (cx,cy,r,w) => ({kind:'stade', cx, cy, r, w}); // capsule horizontale
+  function shapeAt(kind, x, y, r){
+    if(kind==='circle') return circle(x,y,r);
+    if(kind==='losange') return regPoly(x,y,r,4,-Math.PI/2);
+    if(kind==='demi') return arc(x,y,r,Math.PI,TAU);
+    if(kind==='stade') return stade(x,y,r*0.55,r*0.6);
+    return regPoly(x,y,r, kind, BASE_ROT[kind]);
+  }
+
+  // Étendue verticale d'une forme construite en (0,0) — pour l'empilement
+  function vExtent(kind, r){
+    if(kind==='circle') return {top:-r, bot:r};
+    if(kind==='losange') return {top:-r, bot:r};
+    if(kind==='demi') return {top:-r, bot:0};
+    if(kind==='stade') return {top:-r*0.55, bot:r*0.55};
+    if(kind===4) return {top:-r*Math.SQRT1_2, bot:r*Math.SQRT1_2};
+    if(kind===3) return {top:-r, bot:r*0.5};
+    if(kind===6) return {top:-r*Math.sin(Math.PI/3), bot:r*Math.sin(Math.PI/3)};
+    if(kind===8) return {top:-r*Math.cos(Math.PI/8), bot:r*Math.cos(Math.PI/8)};
+    return {top:-r, bot:r};
+  }
+
+  // ---------- Règles de composition ----------
+
+  function ruleTangent(n){
+    const r0 = R(300, 380), k = R(0.76, 0.86);
+    const bottom = rnd() < 0.7;
+    const yT = bottom ? r0 : -r0;
+    const out = []; let r = r0;
+    for(let i=0;i<n;i++){
+      out.push(circle(0, yT + (bottom ? -r : r), r));
+      r *= k;
+    }
+    return out;
+  }
+
+  function ruleConcentrique(n){
+    const kind = pick(['circle','circle',4,3,5,6,8,'losange']);
+    const r0 = R(320, 400);
+    const inner = R(0.22, 0.4);
+    const geo = rnd() < 0.5;
+    const out = [];
+    for(let i=0;i<n;i++){
+      const t = n===1 ? 0 : i/(n-1);
+      const r = geo ? r0*Math.pow(inner, t) : r0*(1 - t*(1-inner));
+      out.push(shapeAt(kind, 0, 0, r));
+    }
+    return out;
+  }
+
+  function ruleTrefle(){
+    const k = pick([2,3,4,4,4,5]);
+    const r = R(230, 280);
+    const d = r * R(0.5, 0.72);
+    const phase = -Math.PI/2 + (rnd()<0.5 ? 0 : Math.PI/k);
+    const out = [];
+    for(let i=0;i<k;i++){
+      const a = phase + i/k*TAU;
+      out.push(circle(Math.cos(a)*d, Math.sin(a)*d, r));
+    }
+    return out;
+  }
+
+  // Traînée : longueur totale bornée -> proportions toujours compactes.
+  // "Formes" joue sur la densité de répétition, pas sur l'étirement.
+  function ruleTrainee(n){
+    const kind = pick(['circle','circle','circle',4,3,'losange','stade',5]);
+    const isCircle = kind === 'circle';
+    const r = R(170, 230);
+    // Cercles : répétition dense (effet extrusion). Autres formes :
+    // moins de copies et pas plus large, pour que les bords se distinguent.
+    const nT = isCircle ? 5 + Math.round((n-3)/4 * 6) : RI(3, 5);
+    const A = pick([-Math.PI/3, -Math.PI/4, -Math.PI*0.36]) * (rnd()<0.5 ? 1 : -1);
+    const total = isCircle ? r * R(1.2, 1.8) : r * R(1.6, 2.3);
+    const step = total/(nT-1);
+    const out = [];
+    for(let i=0;i<nT;i++)
+      out.push(shapeAt(kind, Math.cos(A)*step*i, Math.sin(A)*step*i, r));
+    return out;
+  }
+
+  function ruleRotation(n){
+    const sides = pick([3,4,4,5,6]);
+    // Écart angulaire minimal garanti : plus la forme a de côtés,
+    // moins on autorise de copies (sinon elles se superposent en couronne floue)
+    const maxCopies = {3:5, 4:3, 5:3, 6:2}[sides];
+    const r = R(280, 340);
+    const nR = Math.max(2, Math.min(maxCopies, n-1));
+    const period = TAU/sides;
+    const out = [];
+    for(let i=0;i<nR;i++)
+      out.push(regPoly(0, 0, r, sides, BASE_ROT[sides] + i*period/nR));
+    return out;
+  }
+
+  function ruleInscrit(n){
+    const out = [];
+    let r = R(320, 400);
+    let isCircle = rnd() < 0.7;
+    for(let i=0;i<n;i++){
+      if(isCircle){
+        out.push(circle(0,0,r));
+      } else {
+        const s = pick([3,4,4,5,6]);
+        out.push(regPoly(0,0,r,s,BASE_ROT[s]));
+        r = r * Math.cos(Math.PI/s);
+      }
+      isCircle = !isCircle;
+    }
+    return out;
+  }
+
+  // Satellites : petits cercles posés sur un grand cercle
+  function ruleOrbite(){
+    const r0 = R(270, 330);
+    const k = pick([3,4,5,6,8]);
+    const rs = r0 * R(0.13, 0.2);
+    const out = [circle(0,0,r0)];
+    for(let i=0;i<k;i++){
+      const a = -Math.PI/2 + i/k*TAU;
+      out.push(circle(Math.cos(a)*r0, Math.sin(a)*r0, rs));
+    }
+    return out;
+  }
+
+  // Empilement vertical : formes différentes posées l'une sur l'autre
+  function ruleEmpilement(n){
+    const count = Math.max(2, Math.min(4, Math.round(n*0.6)));
+    const kinds = [];
+    for(let i=0;i<count;i++){
+      let k;
+      do { k = pick(['circle',4,3,'losange','demi',6,'stade',5]); } while(k === kinds[i-1]);
+      kinds.push(k);
+    }
+    const out = [];
+    let cursor = 0;
+    for(const k of kinds){
+      const r = R(130, 200);
+      const e = vExtent(k, r);
+      const cy = cursor - e.top;      // le haut de la forme touche le bas de la précédente
+      out.push(shapeAt(k, 0, cy, r));
+      cursor = cy + e.bot;
+    }
+    return out;
+  }
+
+  // Demi-cercles concentriques sur une même base (arche / coucher de soleil)
+  function ruleDemi(n){
+    const r0 = R(320, 400);
+    const inner = R(0.3, 0.5);
+    const up = rnd() < 0.7;
+    const out = [];
+    for(let i=0;i<n;i++){
+      const t = n===1 ? 0 : i/(n-1);
+      const r = r0*(1 - t*(1-inner));
+      out.push(up ? arc(0,0,r,Math.PI,TAU) : arc(0,0,r,0,Math.PI));
+    }
+    return out;
+  }
+
+  // Grille k x k d'une même forme, avec chevauchement possible
+  function ruleGrille(){
+    const k = pick([2,2,2,3]);
+    const kind = pick(['circle','circle',4,3,'losange',6]);
+    const s = R(150, 210);
+    const gap = s*2 * R(0.55, 0.85);   // <2s -> entrelacement type Venn
+    const out = [];
+    for(let i=0;i<k;i++)
+      for(let j=0;j<k;j++)
+        out.push(shapeAt(kind, (j-(k-1)/2)*gap, (i-(k-1)/2)*gap, s));
+    return out;
+  }
+
+  function ruleEllipses(n){
+    const r0 = R(320, 400);
+    const out = [circle(0,0,r0)];
+    for(let i=1;i<n;i++){
+      const t = i/(n-1);
+      out.push(ellipse(0, 0, r0, r0*(1 - t*R(0.82,0.92))));
+    }
+    return out;
+  }
+
+  function ruleLune(n){
+    const r = R(280, 340);
+    const spread = r*R(0.5, 0.95);
+    const out = [];
+    for(let i=0;i<n;i++){
+      const t = n===1 ? 0.5 : i/(n-1);
+      out.push(circle(0, -spread/2 + t*spread, r));
+    }
+    return out;
+  }
+
+  // Soleil : un cercle + segments rayonnants réguliers
+  function ruleRayons(){
+    const r0 = R(240, 300);
+    const k = pick([8, 12, 16]);
+    const g1 = r0 * R(1.12, 1.2);
+    const g2 = g1 + r0 * R(0.14, 0.24);
+    const out = [circle(0,0,r0)];
+    for(let i=0;i<k;i++){
+      const a = -Math.PI/2 + i/k*TAU;
+      out.push(line(Math.cos(a)*g1, Math.sin(a)*g1, Math.cos(a)*g2, Math.sin(a)*g2));
+    }
+    return out;
+  }
+
+  // Hachures : cordes horizontales d'un cercle (disque strié) ou bandes parallèles
+  function ruleHachures(){
+    const r0 = R(280, 360);
+    const nL = RI(5, 11);
+    const out = [];
+    if(rnd() < 0.6){
+      // disque strié : les traits suivent l'enveloppe d'un cercle
+      for(let i=0;i<nL;i++){
+        const y = -r0 + 2*r0*(i+0.5)/nL;
+        const half = Math.sqrt(Math.max(0, r0*r0 - y*y));
+        out.push(line(-half, y, half, y));
+      }
+    } else {
+      // bandes parallèles égales, horizontales ou verticales
+      const vertical = rnd() < 0.4;
+      const len = R(420, 560);
+      const gap = R(46, 78);
+      for(let i=0;i<nL;i++){
+        const off = (i - (nL-1)/2) * gap;
+        out.push(vertical ? line(off, -len/2, off, len/2)
+                          : line(-len/2, off, len/2, off));
+      }
+    }
+    return out;
+  }
+
+  // Chevrons : V empilés à intervalles réguliers
+  function ruleChevrons(){
+    const w = R(220, 300);
+    const h = w * R(0.45, 0.7);
+    const nC = RI(3, 7);
+    const gap = h * R(0.7, 1.1);
+    const dh = rnd() < 0.5 ? h : -h;   // pointe en haut ou en bas
+    const out = [];
+    for(let i=0;i<nC;i++){
+      const y0 = i * gap;
+      out.push(line(-w, y0 + dh, 0, y0));
+      out.push(line(0, y0, w, y0 + dh));
+    }
+    return out;
+  }
+
+  // Faisceau : segments convergeant vers un même point (éventail)
+  function ruleFaisceau(){
+    const r1 = R(90, 140);
+    const r2 = r1 + R(260, 340);
+    const k = RI(5, 9);
+    const spread = R(Math.PI*0.45, Math.PI*0.8);
+    const base = pick([-Math.PI/2, Math.PI/2, 0, Math.PI]);
+    const out = [];
+    for(let i=0;i<k;i++){
+      const a = base - spread/2 + spread * (k===1 ? 0.5 : i/(k-1));
+      out.push(line(Math.cos(a)*r1, Math.sin(a)*r1, Math.cos(a)*r2, Math.sin(a)*r2));
+    }
+    return out;
+  }
+
+  // Horizon : demi-cercle posé sur des lignes qui se retirent (soleil sur l'eau)
+  function ruleHorizon(){
+    const r0 = R(240, 300);
+    const nL = RI(3, 6);
+    const gap = r0 * R(0.18, 0.28);
+    const out = [arc(0, 0, r0, Math.PI, TAU)];
+    for(let i=0;i<nL;i++){
+      const y = gap * (i+1);
+      const half = r0 * 1.1 * (1 - i/(nL+1));
+      out.push(line(-half, y, half, y));
+    }
+    return out;
+  }
+
+  const RULES = {
+    tangent: ruleTangent,
+    concentrique: ruleConcentrique,
+    trefle: ruleTrefle,
+    trainee: ruleTrainee,
+    rotation: ruleRotation,
+    inscrit: ruleInscrit,
+    orbite: ruleOrbite,
+    empilement: ruleEmpilement,
+    demi: ruleDemi,
+    grille: ruleGrille,
+    rayons: ruleRayons,
+    hachures: ruleHachures,
+    chevrons: ruleChevrons,
+    faisceau: ruleFaisceau,
+    horizon: ruleHorizon,
+    ellipses: ruleEllipses,
+    lune: ruleLune
+  };
+  const RULE_KEYS = Object.keys(RULES);
+
+  // ---------- Rendu ----------
+  const $ = id => document.getElementById(id);
+  let lastGeometry = null;
+
+  function params(){
+    return {
+      fade: 1,     // fondu d'opacité fixé au maximum
+      weight: 1,   // épaisseur de trait fixée au maximum (lw = 4.4)
+      dark: $('dark').checked,
+      grid: $('grid').checked,
+      rule: $('rule').value
+    };
+  }
+
+  function theme(P){
+    return P.dark
+      ? { bg:'#0e0e10', dot:'rgba(255,255,255,0.10)', stroke: a => `rgba(248,248,246,${a.toFixed(3)})` }
+      : { bg:'#fcfbf9', dot:'#d6d4cc', stroke: a => `rgba(46,46,51,${a.toFixed(3)})` };
+  }
+
+  function arcPoints(s, N){
+    const pts = [];
+    for(let i=0;i<=N;i++){
+      const a = s.a0 + (s.a1-s.a0)*i/N;
+      pts.push([s.cx + Math.cos(a)*s.r, s.cy + Math.sin(a)*s.r]);
+    }
+    return pts;
+  }
+
+  function bbox(shapes){
+    let xMin=Infinity,xMax=-Infinity,yMin=Infinity,yMax=-Infinity;
+    const feed = (x,y)=>{
+      xMin=Math.min(xMin,x); xMax=Math.max(xMax,x);
+      yMin=Math.min(yMin,y); yMax=Math.max(yMax,y);
+    };
+    for(const s of shapes){
+      if(s.kind==='ellipse'){ feed(s.cx-s.rx,s.cy-s.ry); feed(s.cx+s.rx,s.cy+s.ry); }
+      else if(s.kind==='arc') for(const [x,y] of arcPoints(s,24)) feed(x,y);
+      else if(s.kind==='line'){ feed(s.x1,s.y1); feed(s.x2,s.y2); }
+      else if(s.kind==='stade'){ feed(s.cx-s.w-s.r, s.cy-s.r); feed(s.cx+s.w+s.r, s.cy+s.r); }
+      else for(const [x,y] of s.pts) feed(x,y);
+    }
+    return {xMin,xMax,yMin,yMax};
+  }
+
+  function render(newSeed){
+    if(newSeed !== undefined) seed = newSeed;
+    rnd = mulberry32(seed);
+    const P = params();
+    const T = theme(P);
+
+    ctx.fillStyle = T.bg;
+    ctx.fillRect(0,0,W,H);
+    if(P.grid){
+      const step = 36;
+      ctx.fillStyle = T.dot;
+      for(let y=step; y<H; y+=step)
+        for(let x=step; x<W; x+=step){
+          ctx.beginPath(); ctx.arc(x,y,1.2,0,TAU); ctx.fill();
+        }
+    }
+
+    // Nombre de formes : tiré aléatoirement à chaque génération (piloté par la seed)
+    const n = RI(3, 7);
+    const ruleKey = P.rule==='auto' ? pick(RULE_KEYS) : P.rule;
+    const shapes = RULES[ruleKey](n);
+
+    // Dégradé d'opacité progressif le long de la séquence de tracés.
+    // Sens du fondu tiré à chaque génération (croissant ou décroissant).
+    const fadeDir = rnd() < 0.5;
+    const alphas = shapes.map((_,i)=>{
+      let t = shapes.length > 1 ? i/(shapes.length-1) : 0;
+      if(fadeDir) t = 1 - t;
+      return 0.95 - P.fade*0.8*t;
+    });
+
+    // Centrage optique : barycentre pondéré par l'aire
+    const b = bbox(shapes);
+    const margin = 160;
+    const fit = Math.min(1, (W-2*margin)/(b.xMax-b.xMin), (H-2*margin)/(b.yMax-b.yMin));
+    let aSum=0, cxW=0, cyW=0;
+    for(const s of shapes){
+      let a, scx, scy;
+      if(s.kind==='ellipse'){
+        a = Math.PI*s.rx*s.ry; scx = s.cx; scy = s.cy;
+      } else if(s.kind==='arc'){
+        const span = s.a1 - s.a0, m = (s.a0+s.a1)/2;
+        a = s.r*s.r*span*0.5;
+        scx = s.cx + Math.cos(m)*s.r*0.5;
+        scy = s.cy + Math.sin(m)*s.r*0.5;
+      } else if(s.kind==='line'){
+        a = Math.hypot(s.x2-s.x1, s.y2-s.y1) * 30;
+        scx = (s.x1+s.x2)/2; scy = (s.y1+s.y2)/2;
+      } else if(s.kind==='stade'){
+        a = 4*s.w*s.r + Math.PI*s.r*s.r;
+        scx = s.cx; scy = s.cy;
+      } else {
+        a = 0; scx = 0; scy = 0;
+        for(let i=0;i<s.pts.length;i++){
+          const [x1,y1] = s.pts[i], [x2,y2] = s.pts[(i+1)%s.pts.length];
+          a += x1*y2 - x2*y1;
+          scx += x1; scy += y1;
+        }
+        a = Math.abs(a)/2;
+        scx /= s.pts.length; scy /= s.pts.length;
+      }
+      aSum += a; cxW += scx*a; cyW += scy*a;
+    }
+    const cx0 = cxW/aSum, cy0 = cyW/aSum;
+    const remap = s => {
+      if(s.kind==='ellipse'){
+        s.cx = W/2 + (s.cx-cx0)*fit; s.cy = H/2 + (s.cy-cy0)*fit;
+        s.rx *= fit; s.ry *= fit;
+      } else if(s.kind==='arc'){
+        s.cx = W/2 + (s.cx-cx0)*fit; s.cy = H/2 + (s.cy-cy0)*fit;
+        s.r *= fit;
+      } else if(s.kind==='line'){
+        s.x1 = W/2 + (s.x1-cx0)*fit; s.y1 = H/2 + (s.y1-cy0)*fit;
+        s.x2 = W/2 + (s.x2-cx0)*fit; s.y2 = H/2 + (s.y2-cy0)*fit;
+      } else if(s.kind==='stade'){
+        s.cx = W/2 + (s.cx-cx0)*fit; s.cy = H/2 + (s.cy-cy0)*fit;
+        s.r *= fit; s.w *= fit;
+      } else {
+        s.pts = s.pts.map(([x,y]) => [W/2 + (x-cx0)*fit, H/2 + (y-cy0)*fit]);
+      }
+    };
+    shapes.forEach(remap);
+    // Garde-fou : ramener dans le cadre si le recentrage optique déborde
+    const b2 = bbox(shapes);
+    let dx = 0, dy = 0;
+    if(b2.xMin < margin) dx = margin - b2.xMin;
+    else if(b2.xMax > W-margin) dx = (W-margin) - b2.xMax;
+    if(b2.yMin < margin) dy = margin - b2.yMin;
+    else if(b2.yMax > H-margin) dy = (H-margin) - b2.yMax;
+    if(dx || dy){
+      for(const s of shapes){
+        if(s.kind==='poly') s.pts = s.pts.map(([x,y]) => [x+dx, y+dy]);
+        else if(s.kind==='line'){ s.x1+=dx; s.y1+=dy; s.x2+=dx; s.y2+=dy; }
+        else { s.cx += dx; s.cy += dy; }
+      }
+    }
+
+    const lw = 1.2 + P.weight*3.2;
+    ctx.lineWidth = lw;
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
+    shapes.forEach((s, i)=>{
+      ctx.strokeStyle = T.stroke(alphas[i]);
+      ctx.beginPath();
+      if(s.kind==='ellipse'){
+        ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, TAU);
+      } else if(s.kind==='arc'){
+        ctx.arc(s.cx, s.cy, s.r, s.a0, s.a1);
+      } else if(s.kind==='line'){
+        ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2);
+      } else if(s.kind==='stade'){
+        ctx.moveTo(s.cx-s.w, s.cy-s.r);
+        ctx.lineTo(s.cx+s.w, s.cy-s.r);
+        ctx.arc(s.cx+s.w, s.cy, s.r, -Math.PI/2, Math.PI/2);
+        ctx.lineTo(s.cx-s.w, s.cy+s.r);
+        ctx.arc(s.cx-s.w, s.cy, s.r, Math.PI/2, Math.PI*1.5);
+        ctx.closePath();
+      } else {
+        ctx.moveTo(s.pts[0][0], s.pts[0][1]);
+        for(let k=1;k<s.pts.length;k++) ctx.lineTo(s.pts[k][0], s.pts[k][1]);
+        ctx.closePath();
+      }
+      ctx.stroke();
+    });
+
+    lastGeometry = {shapes, alphas, lw, T, grid:P.grid, rule:ruleKey};
+    $('seedLine').textContent = `seed ${seed} · ${ruleKey}`;
+  }
+
+  // ---------- Export SVG ----------
+  function toSVG(){
+    if(!lastGeometry) return '';
+    const {shapes, alphas, lw, T, grid} = lastGeometry;
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
+    parts.push(`<rect width="${W}" height="${H}" fill="${T.bg}"/>`);
+    if(grid){
+      const step = 36, dots = [];
+      for(let y=step; y<H; y+=step)
+        for(let x=step; x<W; x+=step)
+          dots.push(`M${x} ${y}m-1.2 0a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0`);
+      parts.push(`<path d="${dots.join('')}" fill="${T.dot}"/>`);
+    }
+    shapes.forEach((s, i)=>{
+      const stroke = `fill="none" stroke="${T.stroke(alphas[i])}" stroke-width="${lw.toFixed(2)}"`;
+      if(s.kind==='ellipse'){
+        if(Math.abs(s.rx - s.ry) < 0.01)
+          parts.push(`<circle cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" r="${s.rx.toFixed(1)}" ${stroke}/>`);
+        else
+          parts.push(`<ellipse cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" rx="${s.rx.toFixed(1)}" ry="${s.ry.toFixed(1)}" ${stroke}/>`);
+      } else if(s.kind==='arc'){
+        const x0 = s.cx + Math.cos(s.a0)*s.r, y0 = s.cy + Math.sin(s.a0)*s.r;
+        const x1 = s.cx + Math.cos(s.a1)*s.r, y1 = s.cy + Math.sin(s.a1)*s.r;
+        const large = (s.a1 - s.a0) > Math.PI ? 1 : 0;
+        parts.push(`<path d="M${x0.toFixed(1)} ${y0.toFixed(1)}A${s.r.toFixed(1)} ${s.r.toFixed(1)} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" ${stroke}/>`);
+      } else if(s.kind==='line'){
+        parts.push(`<line x1="${s.x1.toFixed(1)}" y1="${s.y1.toFixed(1)}" x2="${s.x2.toFixed(1)}" y2="${s.y2.toFixed(1)}" ${stroke}/>`);
+      } else if(s.kind==='stade'){
+        const r = s.r.toFixed(1);
+        parts.push(`<path d="M${(s.cx-s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}L${(s.cx+s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}A${r} ${r} 0 0 1 ${(s.cx+s.w).toFixed(1)} ${(s.cy+s.r).toFixed(1)}L${(s.cx-s.w).toFixed(1)} ${(s.cy+s.r).toFixed(1)}A${r} ${r} 0 0 1 ${(s.cx-s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}Z" ${stroke}/>`);
+      } else {
+        const pts = s.pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+        parts.push(`<polygon points="${pts}" ${stroke}/>`);
+      }
+    });
+    parts.push('</svg>');
+    return parts.join('\n');
+  }
+
+  // ---------- UI ----------
+  $('rule').addEventListener('change', ()=> render((Math.random()*1e9)|0));
+  $('dark').addEventListener('change', ()=> render(seed));
+  $('grid').addEventListener('change', ()=> render(seed));
+  $('regen').addEventListener('click', ()=> render((Math.random()*1e9)|0));
+  canvas.addEventListener('click', ()=>{
+    render((Math.random()*1e9)|0);
+    $('hint').style.opacity = 0;
+  });
+  $('dlpng').addEventListener('click', ()=>{
+    const a = document.createElement('a');
+    a.download = `tracery-${seed}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+  $('dlsvg').addEventListener('click', ()=>{
+    const blob = new Blob([toSVG()], {type:'image/svg+xml'});
+    const a = document.createElement('a');
+    a.download = `tracery-${seed}.svg`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  render(seed);
+})();
+</script>
+</body>
+</html>
