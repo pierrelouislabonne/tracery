@@ -350,15 +350,22 @@
   }
 
   // Demi-cercles concentriques sur une même base (arche / coucher de soleil)
+  // Arches : demi-formes concentriques sur une même base
   function ruleDemi(n){
+    const kind = pick(['circle','circle',4,3,6,'stade']);
     const r0 = R(320, 400);
     const inner = R(0.3, 0.5);
     const up = rnd() < 0.7;
+    const flip = s => {
+      if(s.kind==='arc') return arc(0, 0, s.r, 0, Math.PI);
+      return {kind:'poly', open:true, pts:s.pts.map(([x,y])=>[x,-y])};
+    };
     const out = [];
     for(let i=0;i<n;i++){
       const t = n===1 ? 0 : i/(n-1);
       const r = r0*(1 - t*(1-inner));
-      out.push(up ? arc(0,0,r,Math.PI,TAU) : arc(0,0,r,0,Math.PI));
+      const s = halfTop(kind, r);
+      out.push(up ? s : flip(s));
     }
     return out;
   }
