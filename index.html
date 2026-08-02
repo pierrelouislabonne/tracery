@@ -212,6 +212,7 @@
     if(kind===3) return {top:-r, bot:r*0.5};
     if(kind===6) return {top:-r*Math.sin(Math.PI/3), bot:r*Math.sin(Math.PI/3)};
     if(kind===8) return {top:-r*Math.cos(Math.PI/8), bot:r*Math.cos(Math.PI/8)};
+    if(kind===5) return {top:-r, bot:r*Math.cos(Math.PI/5)};
     return {top:-r, bot:r};
   }
 
@@ -412,15 +413,42 @@
   }
 
   // Hachures : cordes horizontales d'un cercle (disque strié) ou bandes parallèles
+  // Demi-largeur horizontale de l'enveloppe d'une forme à une hauteur y donnée
+  function halfWidthAt(s, y){
+    if(s.kind==='ellipse'){
+      const k = 1 - (y/s.ry)*(y/s.ry);
+      return k <= 0 ? 0 : s.rx*Math.sqrt(k);
+    }
+    if(s.kind==='stade'){
+      const k = s.r*s.r - y*y;
+      return k <= 0 ? 0 : s.w + Math.sqrt(k);
+    }
+    // polygone : intersections de la droite horizontale avec les arêtes
+    let lo = Infinity, hi = -Infinity;
+    for(let i=0;i<s.pts.length;i++){
+      const [x1,y1] = s.pts[i], [x2,y2] = s.pts[(i+1)%s.pts.length];
+      if((y1 <= y && y2 >= y) || (y2 <= y && y1 >= y)){
+        const x = (y2 - y1) === 0 ? x1 : x1 + (x2-x1)*(y-y1)/(y2-y1);
+        lo = Math.min(lo, x); hi = Math.max(hi, x);
+      }
+    }
+    return hi > lo ? (hi - lo)/2 : 0;
+  }
+
   function ruleHachures(){
     const r0 = R(280, 360);
     const nL = RI(5, 11);
     const out = [];
-    if(rnd() < 0.6){
-      // disque strié : les traits suivent l'enveloppe d'un cercle
+    if(rnd() < 0.65){
+      // forme striée : les traits suivent l'enveloppe de la forme choisie
+      const kind = pick(['circle','circle',3,6,5,'losange','stade']);
+      const env = shapeAt(kind, 0, 0, r0);
+      const e = vExtent(kind, r0);
+      const span = e.bot - e.top;
       for(let i=0;i<nL;i++){
-        const y = -r0 + 2*r0*(i+0.5)/nL;
-        const half = Math.sqrt(Math.max(0, r0*r0 - y*y));
+        const y = e.top + span*(i+0.5)/nL;
+        const half = halfWidthAt(env, y);
+        if(half < 8) continue;               // pointe trop fine : on saute
         out.push(line(-half, y, half, y));
       }
     } else {
