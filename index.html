@@ -399,12 +399,15 @@
   }
 
   // Soleil : un cercle + segments rayonnants réguliers
+  // Soleil : une forme centrale + segments rayonnants sur une couronne circulaire
   function ruleRayons(){
+    const kind = pick(['circle','circle',4,3,6,5,8,'losange','stade']);
     const r0 = R(240, 300);
     const k = pick([8, 12, 16]);
-    const g1 = r0 * R(1.12, 1.2);
+    // les rayons restent disposés en cercle, hors de l'emprise de la forme
+    const g1 = r0 * R(1.3, 1.42);
     const g2 = g1 + r0 * R(0.14, 0.24);
-    const out = [circle(0,0,r0)];
+    const out = [shapeAt(kind, 0, 0, r0)];
     for(let i=0;i<k;i++){
       const a = -Math.PI/2 + i/k*TAU;
       out.push(line(Math.cos(a)*g1, Math.sin(a)*g1, Math.cos(a)*g2, Math.sin(a)*g2));
