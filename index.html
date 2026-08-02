@@ -493,12 +493,36 @@
     return out;
   }
 
-  // Horizon : demi-cercle posé sur des lignes qui se retirent (soleil sur l'eau)
+  // Contour supérieur ouvert d'une forme, posé sur la ligne d'horizon (y=0)
+  function halfTop(kind, r){
+    if(kind==='circle') return arc(0, 0, r, Math.PI, TAU);
+    if(kind===4){
+      const w = r*0.8;
+      return {kind:'poly', open:true, pts:[[-w,0],[-w,-w],[w,-w],[w,0]]};
+    }
+    if(kind===3){
+      const w = r*0.95, h = r*0.85;
+      return {kind:'poly', open:true, pts:[[-w,0],[0,-h],[w,0]]};
+    }
+    if(kind===6){
+      const h = r*Math.sin(Math.PI/3);
+      return {kind:'poly', open:true, pts:[[-r,0],[-r/2,-h],[r/2,-h],[r,0]]};
+    }
+    // capsule : deux quarts de cercle reliés par un plat
+    const rr = r*0.6, w = r*0.55;
+    const pts = [];
+    for(let k=0;k<=8;k++){ const a = Math.PI + k/8*(Math.PI/2); pts.push([-w + Math.cos(a)*rr, Math.sin(a)*rr]); }
+    for(let k=0;k<=8;k++){ const a = Math.PI*1.5 + k/8*(Math.PI/2); pts.push([ w + Math.cos(a)*rr, Math.sin(a)*rr]); }
+    return {kind:'poly', open:true, pts};
+  }
+
+  // Horizon : demi-forme posée sur des lignes qui se retirent (soleil sur l'eau)
   function ruleHorizon(){
+    const kind = pick(['circle','circle',4,3,6,'stade']);
     const r0 = R(240, 300);
     const nL = RI(3, 6);
     const gap = r0 * R(0.18, 0.28);
-    const out = [arc(0, 0, r0, Math.PI, TAU)];
+    const out = [halfTop(kind, r0)];
     for(let i=0;i<nL;i++){
       const y = gap * (i+1);
       const half = r0 * 1.1 * (1 - i/(nL+1));
@@ -693,7 +717,7 @@
       } else {
         ctx.moveTo(s.pts[0][0], s.pts[0][1]);
         for(let k=1;k<s.pts.length;k++) ctx.lineTo(s.pts[k][0], s.pts[k][1]);
-        ctx.closePath();
+        if(!s.open) ctx.closePath();
       }
       ctx.stroke();
     });
@@ -735,7 +759,8 @@
         parts.push(`<path d="M${(s.cx-s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}L${(s.cx+s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}A${r} ${r} 0 0 1 ${(s.cx+s.w).toFixed(1)} ${(s.cy+s.r).toFixed(1)}L${(s.cx-s.w).toFixed(1)} ${(s.cy+s.r).toFixed(1)}A${r} ${r} 0 0 1 ${(s.cx-s.w).toFixed(1)} ${(s.cy-s.r).toFixed(1)}Z" ${stroke}/>`);
       } else {
         const pts = s.pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-        parts.push(`<polygon points="${pts}" ${stroke}/>`);
+        parts.push(s.open ? `<polyline points="${pts}" ${stroke}/>`
+                          : `<polygon points="${pts}" ${stroke}/>`);
       }
     });
     parts.push('</svg>');
