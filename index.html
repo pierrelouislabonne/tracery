@@ -697,7 +697,17 @@
       return 0.95 - P.fade*0.8*t;
     });
 
-    // Centrage optique : barycentre pondéré par l'aire
+    // Pointillés : une génération sur trois en comporte.
+    // Soit un sous-ensemble de tracés, soit une alternance régulière.
+    const dashes = (()=>{
+      if(rnd() > 0.34) return shapes.map(()=> null);
+      const dash = [R(7, 13), R(7, 15)].map(v=>+v.toFixed(1));
+      const alternate = rnd() < 0.45;
+      return shapes.map((_,i)=>{
+        if(alternate) return i%2 ? dash : null;
+        return rnd() < 0.4 ? dash : null;
+      });
+    })();
     const b = bbox(shapes);
     const margin = 160;
     const fit = Math.min(1, (W-2*margin)/(b.xMax-b.xMin), (H-2*margin)/(b.yMax-b.yMin));
@@ -769,6 +779,7 @@
     ctx.lineCap = 'butt';
     shapes.forEach((s, i)=>{
       ctx.strokeStyle = T.stroke(alphas[i]);
+      ctx.setLineDash(dashes[i] || []);
       ctx.beginPath();
       if(s.kind==='ellipse'){
         ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, TAU);
@@ -790,15 +801,16 @@
       }
       ctx.stroke();
     });
+    ctx.setLineDash([]);
 
-    lastGeometry = {shapes, alphas, lw, T, grid:P.grid, rule:ruleKey};
+    lastGeometry = {shapes, alphas, dashes, lw, T, grid:P.grid, rule:ruleKey};
     $('seedLine').textContent = `seed ${seed} · ${RULE_LABELS[ruleKey] || ruleKey}`;
   }
 
   // ---------- Export SVG ----------
   function toSVG(){
     if(!lastGeometry) return '';
-    const {shapes, alphas, lw, T, grid} = lastGeometry;
+    const {shapes, alphas, dashes, lw, T, grid} = lastGeometry;
     const parts = [];
     parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
     parts.push(`<rect width="${W}" height="${H}" fill="${T.bg}"/>`);
@@ -810,7 +822,8 @@
       parts.push(`<path d="${dots.join('')}" fill="${T.dot}"/>`);
     }
     shapes.forEach((s, i)=>{
-      const stroke = `fill="none" stroke="${T.stroke(alphas[i])}" stroke-width="${lw.toFixed(2)}"`;
+      const dash = dashes[i] ? ` stroke-dasharray="${dashes[i].join(' ')}"` : '';
+      const stroke = `fill="none" stroke="${T.stroke(alphas[i])}" stroke-width="${lw.toFixed(2)}"${dash}`;
       if(s.kind==='ellipse'){
         if(Math.abs(s.rx - s.ry) < 0.01)
           parts.push(`<circle cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" r="${s.rx.toFixed(1)}" ${stroke}/>`);
