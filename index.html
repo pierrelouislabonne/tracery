@@ -547,6 +547,8 @@
     const spread = R(Math.PI*0.45, Math.PI*0.8);
     const base = pick([-Math.PI/2, Math.PI/2, 0, Math.PI]);
     const out = [];
+    // parfois un cercle au point de convergence, contenu dans le vide central
+    if(rnd() < 0.45) out.push(circle(0, 0, r1 * R(0.55, 0.8)));
     for(let i=0;i<k;i++){
       const a = base - spread/2 + spread * (k===1 ? 0.5 : i/(k-1));
       out.push(line(Math.cos(a)*r1, Math.sin(a)*r1, Math.cos(a)*r2, Math.sin(a)*r2));
