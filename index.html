@@ -387,13 +387,19 @@
     return out;
   }
 
+  // Phases : formes identiques décalées le long de l'axe vertical
   function ruleLune(n){
+    const kind = pick(['circle','circle','circle',4,3,6,'losange','stade']);
+    const isCircle = kind === 'circle';
     const r = R(280, 340);
-    const spread = r*R(0.5, 0.95);
+    // Comme pour la traînée : les formes anguleuses se lisent mal
+    // quand elles se superposent de près -> moins nombreuses, plus espacées
+    const nP = isCircle ? n : Math.min(n, RI(3, 4));
+    const spread = r * (isCircle ? R(0.5, 0.95) : R(0.95, 1.3));
     const out = [];
-    for(let i=0;i<n;i++){
-      const t = n===1 ? 0.5 : i/(n-1);
-      out.push(circle(0, -spread/2 + t*spread, r));
+    for(let i=0;i<nP;i++){
+      const t = nP===1 ? 0.5 : i/(nP-1);
+      out.push(shapeAt(kind, 0, -spread/2 + t*spread, r));
     }
     return out;
   }
