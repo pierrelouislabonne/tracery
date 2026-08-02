@@ -41,15 +41,17 @@
     box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px -18px rgba(40,40,45,.3);
     overflow:hidden;position:relative;background:#0e0e10;
   }
-  canvas{display:block;width:100%;height:100%;cursor:pointer;will-change:transform}
+  .stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+  #bg{pointer-events:none}
+  #c{cursor:pointer;background:transparent;will-change:transform}
   @keyframes pop{
     0%   {transform:translateY(0)      scale(1)}
     35%  {transform:translateY(-9px)   scale(1.012)}
     65%  {transform:translateY(1.5px)  scale(.997)}
     100% {transform:translateY(0)      scale(1)}
   }
-  canvas.pop{animation:pop .42s cubic-bezier(.34,1.4,.5,1)}
-  @media (prefers-reduced-motion:reduce){ canvas.pop{animation:none} }
+  #c.pop{animation:pop .42s cubic-bezier(.34,1.4,.5,1)}
+  @media (prefers-reduced-motion:reduce){ #c.pop{animation:none} }
   .controls{
     width:100%;max-width:550px;
     flex-shrink:0;
@@ -123,7 +125,8 @@
 </header>
 
 <div class="stage" id="stage">
-  <canvas id="c" width="1440" height="1440" aria-label="Marque géométrique générée"></canvas>
+  <canvas id="bg" width="1440" height="1440" aria-hidden="true"></canvas>
+  <canvas id="c" width="1440" height="1440" aria-label="Generated geometric mark"></canvas>
 </div>
 
 <div class="controls">
@@ -173,6 +176,8 @@
 (function(){
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
+  const bgCanvas = document.getElementById('bg');
+  const bgCtx = bgCanvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const TAU = Math.PI*2;
 
@@ -730,16 +735,17 @@
     const T = theme(P);
 
     $('stage').style.background = T.bg;
-    ctx.fillStyle = T.bg;
-    ctx.fillRect(0,0,W,H);
+    bgCtx.fillStyle = T.bg;
+    bgCtx.fillRect(0,0,W,H);
     if(P.grid){
       const step = 36;
-      ctx.fillStyle = T.dot;
+      bgCtx.fillStyle = T.dot;
       for(let y=step; y<H; y+=step)
         for(let x=step; x<W; x+=step){
-          ctx.beginPath(); ctx.arc(x,y,1.2,0,TAU); ctx.fill();
+          bgCtx.beginPath(); bgCtx.arc(x,y,1.2,0,TAU); bgCtx.fill();
         }
     }
+    ctx.clearRect(0,0,W,H);
 
     // Nombre de formes : tiré aléatoirement à chaque génération (piloté par la seed)
     const n = RI(3, 7);
