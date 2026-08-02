@@ -291,15 +291,18 @@
     return out;
   }
 
-  // Satellites : petits cercles posés sur un grand cercle
+  // Satellites : petites formes posées sur un grand cercle
   function ruleOrbite(){
     const r0 = R(270, 330);
     const k = pick([3,4,5,6,8]);
     const rs = r0 * R(0.13, 0.2);
+    // Les satellites peuvent être d'une autre nature que l'orbite,
+    // mais tous identiques entre eux (une seule forme par rôle)
+    const satKind = pick(['circle','circle',4,3,'losange']);
     const out = [circle(0,0,r0)];
     for(let i=0;i<k;i++){
       const a = -Math.PI/2 + i/k*TAU;
-      out.push(circle(Math.cos(a)*r0, Math.sin(a)*r0, rs));
+      out.push(shapeAt(satKind, Math.cos(a)*r0, Math.sin(a)*r0, rs));
     }
     return out;
   }
