@@ -39,7 +39,7 @@
     aspect-ratio:1/1;
     border:1px solid var(--line);border-radius:4px;
     box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px -18px rgba(40,40,45,.3);
-    overflow:hidden;position:relative;background:#0e0e10;
+    overflow:hidden;position:relative;background:#0e0e10;transition:background .15s ease;
   }
   canvas{display:block;width:100%;height:100%;cursor:pointer;will-change:transform}
   @keyframes pop{
@@ -122,7 +122,7 @@
   <div class="seed-line" id="seedLine">seed —</div>
 </header>
 
-<div class="stage">
+<div class="stage" id="stage">
   <canvas id="c" width="1440" height="1440" aria-label="Marque géométrique générée"></canvas>
 </div>
 
@@ -729,6 +729,7 @@
     const P = params();
     const T = theme(P);
 
+    $('stage').style.background = T.bg;
     ctx.fillStyle = T.bg;
     ctx.fillRect(0,0,W,H);
     if(P.grid){
