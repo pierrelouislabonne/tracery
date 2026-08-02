@@ -30,7 +30,7 @@
   header{
     width:100%;max-width:550px;
     display:flex;align-items:baseline;justify-content:space-between;
-    margin-bottom:14px;gap:12px;flex-wrap:wrap;
+    margin-bottom:28px;gap:12px;flex-wrap:wrap;
   }
   h1{font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:.95}
   h1 sup{font-size:0.55em;font-weight:500;letter-spacing:.04em;vertical-align:super;margin-left:1px}
@@ -116,7 +116,8 @@
     border:1px solid var(--ink);background:var(--ink);color:var(--panel);
     letter-spacing:.02em;
   }
-  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.ghost{background:transparent;color:var(--ink);transition:background .15s ease}
+  .btn.ghost:hover{background:rgba(46,46,51,0.06)}
   .btn.ghost:active{transform:translateY(1px)}
   .btn .btn-icon{margin-right:6px;flex:none}
   /* Bouton principal : la tranche est un bloc fixe, seule la face descend */
@@ -136,12 +137,17 @@
     position:relative;z-index:1;border-radius:4px;
     background:var(--bg);color:var(--ink);font-weight:600;
     border:1.5px solid var(--ink);
+    font-family:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+    text-transform:uppercase;
     transition:transform .13s cubic-bezier(.2,.8,.3,1);
   }
   .btn.primary:hover{transform:translateY(-1px)}
   .btn.primary:active,
   .btn.primary.is-pressed{transform:translateY(var(--btn-depth))}
   @media (prefers-reduced-motion:reduce){ .btn.primary{transition:none} }
+  /* Sur toile sombre, on inverse les couleurs du bouton pour garder le relief lisible */
+  .stage.theme-dark .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--bg)}
+  .stage.theme-dark .btn-3d::before{background:var(--bg)}
   @media (max-width:640px){
     .actions{width:100%}
     .btn{flex:1}
@@ -171,7 +177,7 @@
 
 <div class="controls">
   <div class="field small">
-    <label>Rule</label>
+    <label><svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline;margin-right:6px;vertical-align:-.15em"><path d="M2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375ZM7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375ZM12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375Z" fill="currentColor"/></svg>Rule</label>
     <select id="rule">
       <option value="auto" selected>Auto</option>
       <option value="tangent">Tangent</option>
@@ -194,15 +200,14 @@
     </select>
   </div>
   <div class="field small">
-    <label>Theme</label>
+    <label><svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline;margin-right:6px;vertical-align:-.15em"><path d="M7.5 12C7.77614 12 8 12.2239 8 12.5V14.5C8 14.7761 7.77614 15 7.5 15C7.22386 15 7 14.7761 7 14.5V12.5C7 12.2239 7.22386 12 7.5 12ZM3.61133 10.6816C3.80662 10.4868 4.12322 10.4865 4.31836 10.6816C4.5135 10.8768 4.51324 11.1934 4.31836 11.3887L2.90332 12.8037C2.70802 12.9985 2.3914 12.9988 2.19629 12.8037C2.00118 12.6086 2.00147 12.292 2.19629 12.0967L3.61133 10.6816ZM10.6816 10.6816C10.8768 10.4865 11.1934 10.4868 11.3887 10.6816L12.8037 12.0967C12.9985 12.292 12.9988 12.6086 12.8037 12.8037C12.6086 12.9988 12.292 12.9985 12.0967 12.8037L10.6816 11.3887C10.4868 11.1934 10.4865 10.8768 10.6816 10.6816ZM7.5 4.5C9.15685 4.5 10.5 5.84315 10.5 7.5C10.5 9.15685 9.15685 10.5 7.5 10.5C5.84315 10.5 4.5 9.15685 4.5 7.5C4.5 5.84315 5.84315 4.5 7.5 4.5ZM7.5 5.5C6.39543 5.5 5.5 6.39543 5.5 7.5C5.5 8.60457 6.39543 9.5 7.5 9.5C8.60457 9.5 9.5 8.60457 9.5 7.5C9.5 6.39543 8.60457 5.5 7.5 5.5ZM2.5 7C2.77614 7 3 7.22386 3 7.5C3 7.77614 2.77614 8 2.5 8H0.5C0.223858 8 0 7.77614 0 7.5C0 7.22386 0.223858 7 0.5 7H2.5ZM14.5 7C14.7761 7 15 7.22386 15 7.5C15 7.77614 14.7761 8 14.5 8H12.5C12.2239 8 12 7.77614 12 7.5C12 7.22386 12.2239 7 12.5 7H14.5ZM2.19629 2.19629C2.3914 2.00118 2.70802 2.00147 2.90332 2.19629L4.31836 3.61133C4.51324 3.80662 4.5135 4.12322 4.31836 4.31836C4.12322 4.5135 3.80662 4.51324 3.61133 4.31836L2.19629 2.90332C2.00147 2.70802 2.00118 2.3914 2.19629 2.19629ZM12.0967 2.19629C12.292 2.00147 12.6086 2.00118 12.8037 2.19629C12.9988 2.3914 12.9985 2.70802 12.8037 2.90332L11.3887 4.31836C11.1934 4.51324 10.8768 4.5135 10.6816 4.31836C10.4865 4.12322 10.4868 3.80662 10.6816 3.61133L12.0967 2.19629ZM7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0Z" fill="currentColor"/></svg>Theme</label>
     <label class="toggle">
       <input type="checkbox" id="dark" checked>
       <span class="track"></span>
-      <span class="lbl" id="themeLabel">Dark</span>
     </label>
   </div>
   <div class="field small">
-    <label>Background</label>
+    <label><svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline;margin-right:6px;vertical-align:-.15em"><path d="M12.6533 1.00781C13.4097 1.08461 14 1.72334 14 2.5V12.5L13.9922 12.6533C13.9205 13.3593 13.3593 13.9205 12.6533 13.9922L12.5 14H2.5L2.34668 13.9922C1.64069 13.9205 1.07949 13.3593 1.00781 12.6533L1 12.5V2.5C1 1.72334 1.59028 1.08461 2.34668 1.00781L2.5 1H12.5L12.6533 1.00781ZM2 8V12.5C2 12.7761 2.22386 13 2.5 13H7V8H2ZM8 8V13H12.5C12.7761 13 13 12.7761 13 12.5V8H8ZM2.5 2C2.22386 2 2 2.22386 2 2.5V7H7V2H2.5ZM8 7H13V2.5C13 2.22386 12.7761 2 12.5 2H8V7Z" fill="currentColor"/></svg>Background</label>
     <div class="check"><input type="checkbox" id="grid" checked><span>Grid</span></div>
   </div>
   <div class="actions">
@@ -778,6 +783,7 @@
     const T = theme(P);
 
     $('stage').style.background = T.bg;
+    $('stage').classList.toggle('theme-dark', P.dark);
     bgCtx.fillStyle = T.bg;
     bgCtx.fillRect(0,0,W,H);
     if(P.grid){
@@ -927,10 +933,7 @@
 
   // ---------- UI ----------
   $('rule').addEventListener('change', ()=> render((Math.random()*1e9)|0));
-  $('dark').addEventListener('change', ()=>{
-    $('themeLabel').textContent = $('dark').checked ? 'Dark' : 'Light';
-    render(seed);
-  });
+  $('dark').addEventListener('change', ()=> render(seed));
   $('grid').addEventListener('change', ()=> render(seed));
   $('regen').addEventListener('click', ()=> render((Math.random()*1e9)|0));
   canvas.addEventListener('click', ()=>{
