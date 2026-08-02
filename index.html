@@ -223,13 +223,17 @@
 
   // ---------- Règles de composition ----------
 
+  // Tangent : formes décroissantes alignées sur une même ligne de tangence
   function ruleTangent(n){
+    const kind = pick(['circle','circle','circle',4,3,6,5,'losange','stade']);
     const r0 = R(300, 380), k = R(0.76, 0.86);
     const bottom = rnd() < 0.7;
     const yT = bottom ? r0 : -r0;
     const out = []; let r = r0;
     for(let i=0;i<n;i++){
-      out.push(circle(0, yT + (bottom ? -r : r), r));
+      const e = vExtent(kind, r);
+      // la forme touche la ligne yT par son bord bas (ou haut)
+      out.push(shapeAt(kind, 0, yT - (bottom ? e.bot : e.top), r));
       r *= k;
     }
     return out;
