@@ -37,12 +37,6 @@
     overflow:hidden;position:relative;background:#0e0e10;
   }
   canvas{display:block;width:100%;height:100%;cursor:pointer}
-  .hint{
-    position:absolute;right:10px;bottom:8px;
-    font-size:10px;color:#6a6a70;
-    font-family:ui-monospace,monospace;
-    opacity:.8;pointer-events:none;transition:opacity .4s;
-  }
   .controls{
     width:100%;max-width:860px;
     flex-shrink:0;
@@ -117,7 +111,6 @@
 
 <div class="stage">
   <canvas id="c" width="1440" height="1440" aria-label="Marque géométrique générée"></canvas>
-  <div class="hint" id="hint">click = new mark</div>
 </div>
 
 <div class="controls">
@@ -816,7 +809,6 @@
   $('regen').addEventListener('click', ()=> render((Math.random()*1e9)|0));
   canvas.addEventListener('click', ()=>{
     render((Math.random()*1e9)|0);
-    $('hint').style.opacity = 0;
   });
   $('dlpng').addEventListener('click', ()=>{
     const a = document.createElement('a');
