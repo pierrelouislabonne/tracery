@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tracery</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230e0e10'/%3E%3Cg%20fill='none'%20stroke='%23f8f8f6'%20stroke-width='1.5'%3E%3Ccircle%20cx='16'%20cy='16.2'%20r='12'%20opacity='.46'/%3E%3Ccircle%20cx='16'%20cy='19.3'%20r='8.9'%20opacity='.72'/%3E%3Ccircle%20cx='16'%20cy='22'%20r='6.2'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f1efe9;
@@ -14,6 +15,8 @@
     --ink:#2e2e33;
     --ink-soft:#8a8a90;
     --line:#e4e2da;
+    --ctl-h:31px;        /* hauteur commune des contrôles, pour les aligner */
+    --btn-depth:4px;     /* épaisseur du relief du bouton principal */
   }
   *{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation}
   html{height:100%}
@@ -37,7 +40,9 @@
     width:100%;max-width:550px;
     flex-shrink:0;
     aspect-ratio:1/1;
-    border:1px solid var(--line);border-radius:16px;
+    /* cadre blanc de 16px ; rayon extérieur = 16 + 16 pour garder
+       un arrondi de 16px sur le canvas intérieur */
+    border:16px solid #fff;border-radius:32px;
     box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px -18px rgba(40,40,45,.3);
     overflow:hidden;position:relative;background:#0e0e10;
   }
@@ -58,14 +63,16 @@
     display:flex;flex-wrap:wrap;gap:18px 28px;
     align-items:flex-end;margin-top:16px;
     padding:14px 16px;background:var(--panel);
-    border:1px solid var(--line);border-radius:4px;
+    border-radius:16px;
   }
   .field{display:flex;flex-direction:column;gap:6px;min-width:110px;flex:1}
   .field.small{flex:0 0 auto;min-width:0}
   label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);font-weight:600}
+  /* noms des contrôleurs */
+  .field > label:not(.toggle){font-family:"Space Grotesk",ui-sans-serif,system-ui,sans-serif}
   select{
     appearance:none;font-family:inherit;font-size:12px;color:var(--ink);
-    padding:7px 28px 7px 10px;border:1px solid #d9d7cf;border-radius:3px;
+    height:var(--ctl-h);padding:0 28px 0 10px;border:1px solid #d9d7cf;border-radius:3px;
     background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%232e2e33'/%3E%3C/svg%3E") no-repeat right 10px center;
     cursor:pointer;
   }
@@ -82,10 +89,10 @@
     width:12px;height:12px;border-radius:50%;
     background:var(--panel);border:1.5px solid var(--ink);cursor:pointer;
   }
-  .check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);padding-bottom:2px}
+  .check{display:flex;align-items:center;gap:8px;height:var(--ctl-h);font-size:12px;color:var(--ink)}
   .check input{accent-color:var(--ink)}
   /* Toggle coulissant Dark / Light */
-  .toggle{display:flex;align-items:center;gap:9px;padding-bottom:2px;cursor:pointer;user-select:none}
+  .toggle{display:flex;align-items:center;gap:9px;height:var(--ctl-h);cursor:pointer;user-select:none}
   .toggle input{position:absolute;opacity:0;width:0;height:0}
   .toggle .track{
     position:relative;width:38px;height:21px;flex:0 0 auto;
@@ -101,19 +108,51 @@
   .toggle input:checked + .track::after{transform:translateX(17px)}
   .toggle input:focus-visible + .track{outline:2px solid var(--ink);outline-offset:2px}
   .toggle .lbl{font-size:12px;color:var(--ink);min-width:34px}
-  .actions{display:flex;gap:8px;margin-left:auto}
+  .actions{display:flex;gap:8px;margin-right:auto}
   .btn{
     appearance:none;font-family:inherit;font-size:12px;
-    padding:8px 16px;border-radius:3px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;
+    height:var(--ctl-h);padding:0 16px;border-radius:3px;cursor:pointer;
     border:1px solid var(--ink);background:var(--ink);color:var(--panel);
     letter-spacing:.02em;
   }
   .btn.ghost{background:transparent;color:var(--ink)}
-  .btn:active{transform:translateY(1px)}
+  .btn.ghost:active{transform:translateY(1px)}
+  .btn .btn-icon{margin-right:6px;flex:none}
+  /* Bouton principal : la tranche est un bloc fixe, seule la face descend */
+  .btn-3d{position:relative;display:inline-flex}
+  .btn-3d::before{
+    content:'';position:absolute;z-index:0;
+    left:0;right:0;top:var(--btn-depth);bottom:calc(-1 * var(--btn-depth));
+    background:var(--ink);border-radius:4px;
+  }
+  /* Generate posé dans le coin bas-gauche du canvas ; le décalage bas
+     inclut la tranche du relief pour garder 16px de marge visuelle */
+  .btn-3d.stage-action{
+    position:absolute;z-index:2;
+    left:16px;bottom:calc(16px + var(--btn-depth));
+  }
+  .btn.primary{
+    position:relative;z-index:1;border-radius:4px;
+    background:var(--bg);color:var(--ink);font-weight:600;
+    border:1.5px solid var(--ink);
+    transition:transform .13s cubic-bezier(.2,.8,.3,1);
+  }
+  .btn.primary:hover{transform:translateY(-1px)}
+  .btn.primary:active,
+  .btn.primary.is-pressed{transform:translateY(var(--btn-depth))}
+  @media (prefers-reduced-motion:reduce){ .btn.primary{transition:none} }
   @media (max-width:640px){
-    .actions{margin-left:0;width:100%}
+    .actions{width:100%}
     .btn{flex:1}
   }
+  .legal{
+    width:100%;max-width:550px;
+    margin-top:14px;text-align:center;
+    font-size:11px;letter-spacing:.02em;color:var(--ink-soft);
+  }
+  .legal a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+  .legal a:hover{color:var(--ink);border-bottom-color:var(--ink)}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 </style>
 </head>
@@ -127,6 +166,7 @@
 <div class="stage" id="stage">
   <canvas id="bg" width="1440" height="1440" aria-hidden="true"></canvas>
   <canvas id="c" width="1440" height="1440" aria-label="Generated geometric mark"></canvas>
+  <span class="btn-3d stage-action"><button class="btn primary" id="regen"><svg class="btn-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M1.90321 7.29677C1.90321 10.341 4.11041 12.4147 6.58893 12.8439C6.87255 12.893 7.06266 13.1627 7.01355 13.4464C6.96444 13.73 6.69471 13.9201 6.41109 13.871C3.49942 13.3668 0.86084 10.9127 0.86084 7.29677C0.86084 5.29094 1.83155 3.5311 3.32371 2.43917L2.68899 2.43917C2.40284 2.43917 2.17086 2.20719 2.17086 1.92104C2.17086 1.63489 2.40284 1.40291 2.68899 1.40291L4.88395 1.40291C5.1701 1.40291 5.40208 1.63489 5.40208 1.92104L5.40208 4.11599C5.40208 4.40214 5.1701 4.63412 4.88395 4.63412C4.5978 4.63412 4.36582 4.40214 4.36582 4.11599L4.36582 3.07349C3.09206 3.9723 1.90321 5.44892 1.90321 7.29677ZM13.0109 7.70323C13.0109 4.65901 10.8036 2.58531 8.32511 2.15612C8.04149 2.10701 7.85138 1.83728 7.90049 1.55366C7.9496 1.27004 8.21933 1.07993 8.50295 1.12904C11.4146 1.63322 14.0532 4.08734 14.0532 7.70323C14.0532 9.70905 13.0825 11.4689 11.5903 12.5608L12.2251 12.5608C12.5112 12.5608 12.7432 12.7928 12.7432 13.079C12.7432 13.3651 12.5112 13.5971 12.2251 13.5971L10.0301 13.5971C9.74398 13.5971 9.512 13.3651 9.512 13.079L9.512 10.884C9.512 10.5979 9.74398 10.3659 10.0301 10.3659C10.3163 10.3659 10.5483 10.5979 10.5483 10.884L10.5483 11.9265C11.822 11.0277 13.0109 9.55108 13.0109 7.70323Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>Generate</button></span>
 </div>
 
 <div class="controls">
@@ -166,11 +206,14 @@
     <div class="check"><input type="checkbox" id="grid" checked><span>Grid</span></div>
   </div>
   <div class="actions">
-    <button class="btn ghost" id="dlsvg">SVG</button>
-    <button class="btn ghost" id="dlpng">PNG</button>
-    <button class="btn" id="regen">Generate</button>
+    <button class="btn ghost" id="dlsvg"><svg class="btn-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.73386 9.90258 7.61936 9.94999 7.50005 9.94999C7.38074 9.94999 7.26624 9.90258 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5528 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1041 12.1062 14 11.0012 14H3.99635C2.89019 14 2 13.1027 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>SVG</button>
+    <button class="btn ghost" id="dlpng"><svg class="btn-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.73386 9.90258 7.61936 9.94999 7.50005 9.94999C7.38074 9.94999 7.26624 9.90258 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5528 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1041 12.1062 14 11.0012 14H3.99635C2.89019 14 2 13.1027 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>PNG</button>
   </div>
 </div>
+
+<footer class="legal">
+  <a href="https://pierrelouis.design" target="_blank" rel="noopener">pierrelouis.design</a>
+</footer>
 
 <script>
 (function(){
