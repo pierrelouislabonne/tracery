@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -100,45 +100,45 @@
 
 <div class="stage">
   <canvas id="c" width="1440" height="1440" aria-label="Marque géométrique générée"></canvas>
-  <div class="hint" id="hint">clic = nouvelle marque</div>
+  <div class="hint" id="hint">click = new mark</div>
 </div>
 
 <div class="controls">
   <div class="field small">
-    <label>Règle</label>
+    <label>Rule</label>
     <select id="rule">
       <option value="auto" selected>Auto</option>
       <option value="tangent">Tangent</option>
-      <option value="concentrique">Concentrique</option>
-      <option value="trefle">Trèfle</option>
-      <option value="trainee">Traînée</option>
+      <option value="concentrique">Concentric</option>
+      <option value="trefle">Clover</option>
+      <option value="trainee">Trail</option>
       <option value="rotation">Rotation</option>
-      <option value="inscrit">Inscrit</option>
-      <option value="orbite">Orbite</option>
-      <option value="empilement">Empilement</option>
-      <option value="demi">Demi-cercles</option>
-      <option value="grille">Grille</option>
-      <option value="rayons">Rayons</option>
-      <option value="hachures">Hachures</option>
+      <option value="inscrit">Inscribed</option>
+      <option value="orbite">Orbit</option>
+      <option value="empilement">Stack</option>
+      <option value="demi">Arches</option>
+      <option value="grille">Grid</option>
+      <option value="rayons">Rays</option>
+      <option value="hachures">Hatching</option>
       <option value="chevrons">Chevrons</option>
-      <option value="faisceau">Faisceau</option>
+      <option value="faisceau">Fan</option>
       <option value="horizon">Horizon</option>
       <option value="ellipses">Ellipses</option>
-      <option value="lune">Lune</option>
+      <option value="lune">Phases</option>
     </select>
   </div>
   <div class="field small">
-    <label>Thème</label>
-    <div class="check"><input type="checkbox" id="dark" checked><span>Sombre</span></div>
+    <label>Theme</label>
+    <div class="check"><input type="checkbox" id="dark" checked><span>Dark</span></div>
   </div>
   <div class="field small">
-    <label>Fond</label>
-    <div class="check"><input type="checkbox" id="grid" checked><span>Grille</span></div>
+    <label>Background</label>
+    <div class="check"><input type="checkbox" id="grid" checked><span>Grid</span></div>
   </div>
   <div class="actions">
     <button class="btn ghost" id="dlsvg">SVG</button>
     <button class="btn ghost" id="dlpng">PNG</button>
-    <button class="btn" id="regen">Générer</button>
+    <button class="btn" id="regen">Generate</button>
   </div>
 </div>
 
@@ -553,6 +553,14 @@
     ellipses: ruleEllipses,
     lune: ruleLune
   };
+  // Libellés anglais des règles, pour la ligne de seed
+  const RULE_LABELS = {
+    tangent:'tangent', concentrique:'concentric', trefle:'clover', trainee:'trail',
+    rotation:'rotation', inscrit:'inscribed', orbite:'orbit', empilement:'stack',
+    demi:'arches', grille:'grid', rayons:'rays', hachures:'hatching',
+    chevrons:'chevrons', faisceau:'fan', horizon:'horizon',
+    ellipses:'ellipses', lune:'phases'
+  };
   const RULE_KEYS = Object.keys(RULES);
 
   // ---------- Rendu ----------
@@ -726,7 +734,7 @@
     });
 
     lastGeometry = {shapes, alphas, lw, T, grid:P.grid, rule:ruleKey};
-    $('seedLine').textContent = `seed ${seed} · ${ruleKey}`;
+    $('seedLine').textContent = `seed ${seed} · ${RULE_LABELS[ruleKey] || ruleKey}`;
   }
 
   // ---------- Export SVG ----------
