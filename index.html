@@ -666,6 +666,38 @@
     return {xMin,xMax,yMin,yMax};
   }
 
+  // Tracé des formes sur un contexte donné (réutilisé pour l'export PNG transparent)
+  function paintStrokes(c, shapes, alphas, dashes, lw, T){
+    c.lineWidth = lw;
+    c.lineJoin = 'miter';
+    c.lineCap = 'butt';
+    shapes.forEach((s, i)=>{
+      c.strokeStyle = T.stroke(alphas[i]);
+      c.setLineDash(dashes[i] || []);
+      c.beginPath();
+      if(s.kind==='ellipse'){
+        c.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, TAU);
+      } else if(s.kind==='arc'){
+        c.arc(s.cx, s.cy, s.r, s.a0, s.a1);
+      } else if(s.kind==='line'){
+        c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2);
+      } else if(s.kind==='stade'){
+        c.moveTo(s.cx-s.w, s.cy-s.r);
+        c.lineTo(s.cx+s.w, s.cy-s.r);
+        c.arc(s.cx+s.w, s.cy, s.r, -Math.PI/2, Math.PI/2);
+        c.lineTo(s.cx-s.w, s.cy+s.r);
+        c.arc(s.cx-s.w, s.cy, s.r, Math.PI/2, Math.PI*1.5);
+        c.closePath();
+      } else {
+        c.moveTo(s.pts[0][0], s.pts[0][1]);
+        for(let k=1;k<s.pts.length;k++) c.lineTo(s.pts[k][0], s.pts[k][1]);
+        if(!s.open) c.closePath();
+      }
+      c.stroke();
+    });
+    c.setLineDash([]);
+  }
+
   function render(newSeed){
     if(newSeed !== undefined) seed = newSeed;
     rnd = mulberry32(seed);
@@ -771,34 +803,7 @@
     }
 
     const lw = 1.2 + P.weight*3.2;
-    ctx.lineWidth = lw;
-    ctx.lineJoin = 'miter';
-    ctx.lineCap = 'butt';
-    shapes.forEach((s, i)=>{
-      ctx.strokeStyle = T.stroke(alphas[i]);
-      ctx.setLineDash(dashes[i] || []);
-      ctx.beginPath();
-      if(s.kind==='ellipse'){
-        ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, TAU);
-      } else if(s.kind==='arc'){
-        ctx.arc(s.cx, s.cy, s.r, s.a0, s.a1);
-      } else if(s.kind==='line'){
-        ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2);
-      } else if(s.kind==='stade'){
-        ctx.moveTo(s.cx-s.w, s.cy-s.r);
-        ctx.lineTo(s.cx+s.w, s.cy-s.r);
-        ctx.arc(s.cx+s.w, s.cy, s.r, -Math.PI/2, Math.PI/2);
-        ctx.lineTo(s.cx-s.w, s.cy+s.r);
-        ctx.arc(s.cx-s.w, s.cy, s.r, Math.PI/2, Math.PI*1.5);
-        ctx.closePath();
-      } else {
-        ctx.moveTo(s.pts[0][0], s.pts[0][1]);
-        for(let k=1;k<s.pts.length;k++) ctx.lineTo(s.pts[k][0], s.pts[k][1]);
-        if(!s.open) ctx.closePath();
-      }
-      ctx.stroke();
-    });
-    ctx.setLineDash([]);
+    paintStrokes(ctx, shapes, alphas, dashes, lw, T);
 
     lastGeometry = {shapes, alphas, dashes, lw, T, grid:P.grid, rule:ruleKey};
     $('seedLine').textContent = `seed ${seed} · ${RULE_LABELS[ruleKey] || ruleKey}`;
@@ -810,7 +815,6 @@
     const {shapes, alphas, dashes, lw, T, grid} = lastGeometry;
     const parts = [];
     parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
-    parts.push(`<rect width="${W}" height="${H}" fill="${T.bg}"/>`);
     if(grid){
       const step = 36, dots = [];
       for(let y=step; y<H; y+=step)
@@ -858,9 +862,23 @@
     render((Math.random()*1e9)|0);
   });
   $('dlpng').addEventListener('click', ()=>{
+    if(!lastGeometry) return;
+    const {shapes, alphas, dashes, lw, T, grid} = lastGeometry;
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const oc = off.getContext('2d');       // fond transparent : pas de fillRect
+    if(grid){
+      const step = 36;
+      oc.fillStyle = T.dot;
+      for(let y=step; y<H; y+=step)
+        for(let x=step; x<W; x+=step){
+          oc.beginPath(); oc.arc(x,y,1.4,0,TAU); oc.fill();
+        }
+    }
+    paintStrokes(oc, shapes, alphas, dashes, lw, T);
     const a = document.createElement('a');
     a.download = `tracery-${seed}.png`;
-    a.href = canvas.toDataURL('image/png');
+    a.href = off.toDataURL('image/png');
     a.click();
   });
   $('dlsvg').addEventListener('click', ()=>{
