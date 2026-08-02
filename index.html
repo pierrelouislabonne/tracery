@@ -697,16 +697,13 @@
       return 0.95 - P.fade*0.8*t;
     });
 
-    // Pointillés : une génération sur trois en comporte.
-    // Soit un sous-ensemble de tracés, soit une alternance régulière.
+    // Pointillés : au plus un seul tracé de la composition, tiré au hasard.
     const dashes = (()=>{
-      if(rnd() > 0.34) return shapes.map(()=> null);
+      const none = shapes.map(()=> null);
+      if(rnd() > 0.34) return none;
       const dash = [R(7, 13), R(7, 15)].map(v=>+v.toFixed(1));
-      const alternate = rnd() < 0.45;
-      return shapes.map((_,i)=>{
-        if(alternate) return i%2 ? dash : null;
-        return rnd() < 0.4 ? dash : null;
-      });
+      none[RI(0, shapes.length-1)] = dash;
+      return none;
     })();
     const b = bbox(shapes);
     const margin = 160;
