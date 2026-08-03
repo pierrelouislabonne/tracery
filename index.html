@@ -211,6 +211,10 @@
     <label><svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline;margin-right:6px;vertical-align:-.15em"><path d="M12.6533 1.00781C13.4097 1.08461 14 1.72334 14 2.5V12.5L13.9922 12.6533C13.9205 13.3593 13.3593 13.9205 12.6533 13.9922L12.5 14H2.5L2.34668 13.9922C1.64069 13.9205 1.07949 13.3593 1.00781 12.6533L1 12.5V2.5C1 1.72334 1.59028 1.08461 2.34668 1.00781L2.5 1H12.5L12.6533 1.00781ZM2 8V12.5C2 12.7761 2.22386 13 2.5 13H7V8H2ZM8 8V13H12.5C12.7761 13 13 12.7761 13 12.5V8H8ZM2.5 2C2.22386 2 2 2.22386 2 2.5V7H7V2H2.5ZM8 7H13V2.5C13 2.22386 12.7761 2 12.5 2H8V7Z" fill="currentColor"/></svg>Background</label>
     <div class="check"><input type="checkbox" id="grid" checked><span>Grid</span></div>
   </div>
+  <div class="field small">
+    <label><svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline;margin-right:6px;vertical-align:-.15em"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor"/><path d="M7.5 1.5A6 6 0 0 1 7.5 13.5Z" fill="currentColor"/></svg>Stroke</label>
+    <div class="check"><input type="checkbox" id="fade" checked><span>Fade</span></div>
+  </div>
   <div class="actions">
     <button class="btn ghost" id="dlsvg"><svg class="btn-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.73386 9.90258 7.61936 9.94999 7.50005 9.94999C7.38074 9.94999 7.26624 9.90258 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5528 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1041 12.1062 14 11.0012 14H3.99635C2.89019 14 2 13.1027 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>SVG</button>
     <button class="btn ghost" id="dlpng"><svg class="btn-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.73386 9.90258 7.61936 9.94999 7.50005 9.94999C7.38074 9.94999 7.26624 9.90258 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5528 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1041 12.1062 14 11.0012 14H3.99635C2.89019 14 2 13.1027 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>PNG</button>
@@ -700,7 +704,7 @@
 
   function params(){
     return {
-      fade: 1,     // fondu d'opacité fixé au maximum
+      fade: $('fade').checked ? 1 : 0,  // fondu d'opacité : maximum ou aucun
       weight: 1,   // épaisseur de trait fixée au maximum (lw = 4.4)
       dark: $('dark').checked,
       grid: $('grid').checked,
@@ -936,6 +940,7 @@
   $('rule').addEventListener('change', ()=> render((Math.random()*1e9)|0));
   $('dark').addEventListener('change', ()=> render(seed));
   $('grid').addEventListener('change', ()=> render(seed));
+  $('fade').addEventListener('change', ()=> render(seed));
   $('regen').addEventListener('click', ()=> render((Math.random()*1e9)|0));
   canvas.addEventListener('click', ()=>{
     render((Math.random()*1e9)|0);
