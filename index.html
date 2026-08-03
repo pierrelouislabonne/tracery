@@ -15,6 +15,7 @@
     --ink:#2e2e33;
     --ink-soft:#8a8a90;
     --line:#e4e2da;
+    --canvas-dark:#0e0e10; /* fond sombre du canvas (voir theme() dans le script) */
     --ctl-h:31px;        /* hauteur commune des contrôles, pour les aligner */
     --btn-depth:4px;     /* épaisseur du relief du bouton principal */
   }
@@ -44,7 +45,7 @@
        un arrondi de 16px sur le canvas intérieur */
     border:16px solid #fff;border-radius:32px;
     box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px -18px rgba(40,40,45,.3);
-    overflow:hidden;position:relative;background:#0e0e10;
+    overflow:hidden;position:relative;background:var(--canvas-dark);
   }
   .stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
   #bg{pointer-events:none}
@@ -146,7 +147,7 @@
   .btn.primary.is-pressed{transform:translateY(var(--btn-depth))}
   @media (prefers-reduced-motion:reduce){ .btn.primary{transition:none} }
   /* Sur toile sombre, on inverse les couleurs du bouton pour garder le relief lisible */
-  .stage.theme-dark .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--bg)}
+  .stage.theme-dark .btn.primary{background:var(--canvas-dark);color:var(--bg);border-color:var(--bg)}
   .stage.theme-dark .btn-3d::before{background:var(--bg)}
   @media (max-width:640px){
     .actions{width:100%}
