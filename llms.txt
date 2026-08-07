@@ -11,16 +11,58 @@ empty shell — there is no mark in the HTTP response, and no server-side render
 You need a real browser (Playwright, Puppeteer, a browser-automation tool). If
 all you can do is fetch URLs, you cannot use Tracery.
 
+What not to do — each of these costs you dearly, and none of them is necessary:
+
+- **Do not read `index.html`.** Everything you need is on this page. The source
+  is 45 KB of geometry you will never call directly.
+- **Do not screenshot the page.** The deliverable is the string returned by
+  `toSVG()`, written straight to a file. You never have to *see* the mark to
+  produce it. Take a screenshot only if you must judge the result visually —
+  choosing between candidates, say — and never as a way of checking that the
+  export worked.
+- **Do not recreate the mark.** Never redraw it from a screenshot, and never
+  hand-write SVG that imitates it. The only valid output is the exact string
+  `toSVG()` returned — anything else has different geometry, and its `url` no
+  longer reproduces it.
+
+The whole job is one script (below), one process, one file written.
+
 ## Recipe
 
+Run this and you are done — no page inspection, no screenshot, no second pass:
+
+```js
+// node get-mark.js  ·  npm i playwright
+const { chromium } = require('playwright');
+const fs = require('fs');
+
+const url = 'https://pierrelouislabonne.github.io/tracery/'
+          + '?seed=8421&rule=orbit&dark=0&grid=0';
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.goto(url);
+  await page.waitForFunction(() => document.documentElement.dataset.traceryReady === '1');
+  const svg = await page.evaluate(() => tracery.toSVG());
+  const state = await page.evaluate(() => tracery.state());
+  fs.writeFileSync('mark.svg', svg);
+  console.log(state.url);          // permalink: reproduces this mark exactly
+  await browser.close();
+})();
+```
+
+Step by step, if you are driving a browser tool rather than a script:
+
 1. Open `https://pierrelouislabonne.github.io/tracery/?seed=8421&rule=orbit&dark=0&grid=0`
+   — `dark=0` gives dark strokes, which is what you want unless the mark is
+   going onto a dark surface. See the `dark` trap below.
 2. Wait for `document.documentElement.dataset.traceryReady === '1'`.
    The first mark is then drawn and `window.tracery` is callable.
 3. Take what you need:
    - `tracery.toSVG()` → SVG string. This is the deliverable: native primitives
      (`circle`, `polygon`, `line`, arc paths), transparent background. Write it
-     to a file yourself.
-   - a screenshot of `<canvas id="c">`, if you only need to look at the result.
+     to a file.
    - `tracery.state()` → `{ seed, rule, ruleInput, dark, grid, fade, url }`.
      Record `url`: it reproduces the mark exactly.
 
@@ -40,7 +82,7 @@ All optional; each keeps its default when omitted.
 | `fade`    | `1` / `0`       | `1`     |
 
 `grid` is the dotted backdrop — and it is included in the SVG export. Set
-`grid=0` before exporting.
+`grid=0` before exporting: with `grid=1` the export is ~87 KB instead of ~1 KB.
 `fade` makes each stroke fade progressively in opacity along the sequence.
 
 ## window.tracery
@@ -84,7 +126,7 @@ Pick a key from the intent, or leave `auto` and let the seed decide.
 An unknown key throws from `generate()`; in a URL it is ignored with a console
 warning and defaults apply.
 
-## Three things that will bite you
+## Traps
 
 **Reproduce with `ruleInput`, not `rule`.** `state()` returns both: `rule` is the
 rule actually used, `ruleInput` is `auto` when the pick was left to chance. Under
@@ -95,6 +137,8 @@ rule yields a different mark. The `url` field always carries the right pair.
 a dark-theme mark placed on a light page is invisible. Use `dark=0` for a mark
 that has to stand on its own.
 
-**The grid exports too.** With `grid=1` (the default), `toSVG()` includes the
-~1500 dots of the backdrop in the file. Set `grid=0` before calling `toSVG()`
-if you want the mark alone.
+**The grid exports too, and it is huge.** With `grid=1` (the default),
+`toSVG()` returns **~87 KB** instead of ~1 KB — the 1521 dots of the backdrop
+outweigh the mark by a factor of 88. Set `grid=0` before calling `toSVG()`
+unless you genuinely want the dotted background in the file. If you keep it,
+write the string straight to disk and never hold it in your context.
