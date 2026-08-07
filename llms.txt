@@ -1,0 +1,95 @@
+# Tracery
+
+> Generative geometric marks — minimal compositions of circles, polygons and
+> lines, driven by a seed so any mark is reproducible. Free, no key, no install.
+> https://pierrelouislabonne.github.io/tracery/
+
+## Read this first
+
+**The page renders client-side, into a `<canvas>`. Fetching the URL returns an
+empty shell — there is no mark in the HTTP response, and no server-side render.**
+You need a real browser (Playwright, Puppeteer, a browser-automation tool). If
+all you can do is fetch URLs, you cannot use Tracery.
+
+## Recipe
+
+1. Open `https://pierrelouislabonne.github.io/tracery/?seed=8421&rule=orbit&dark=0`
+2. Wait for `document.documentElement.dataset.traceryReady === '1'`.
+   The first mark is then drawn and `window.tracery` is callable.
+3. Take what you need:
+   - `tracery.toSVG()` → SVG string. This is the deliverable: native primitives
+     (`circle`, `polygon`, `line`, arc paths), transparent background. Write it
+     to a file yourself.
+   - a screenshot of `<canvas id="c">`, if you only need to look at the result.
+   - `tracery.state()` → `{ seed, rule, ruleInput, dark, grid, fade, url }`.
+     Record `url`: it reproduces the mark exactly.
+
+Do not call `tracery.download()` — it triggers a browser download that lands
+outside your reach. Use `toSVG()`.
+
+## URL parameters
+
+All optional; each keeps its default when omitted.
+
+| Parameter | Values          | Default |
+|-----------|-----------------|---------|
+| `seed`    | integer         | random  |
+| `rule`    | `auto` or a key | `auto`  |
+| `dark`    | `1` / `0`       | `1`     |
+| `grid`    | `1` / `0`       | `1`     |
+| `fade`    | `1` / `0`       | `1`     |
+
+`grid` is the on-screen dotted backdrop only — it is never part of the export.
+`fade` makes each stroke fade progressively in opacity along the sequence.
+
+## window.tracery
+
+```js
+tracery.generate({ seed, rule, dark, grid, fade })  // re-render, returns state()
+tracery.toSVG()                                     // SVG string
+tracery.state()                                     // current mark + permalink
+tracery.rules()                                     // the 17 rule keys
+tracery.geometry()                                  // raw shapes, alphas, dashes
+```
+
+All arguments are optional; unspecified options keep their current value.
+`generate()` without a seed draws a random one and returns it, so the mark stays
+reproducible. Generating in a loop is cheap — no network, no rate limit.
+
+## Composition rules
+
+Pick a key from the intent, or leave `auto` and let the seed decide.
+
+| Key          | Composition                                          | Reads as                     |
+|--------------|------------------------------------------------------|------------------------------|
+| `tangent`    | shrinking shapes sharing one tangency line           | growth, hierarchy            |
+| `concentric` | nested copies of one shape around a center           | focus, depth                 |
+| `clover`     | 2–5 overlapping circles around a center              | union, community, vesica     |
+| `trail`      | one shape repeated along a diagonal                  | motion, speed, extrusion     |
+| `rotation`   | a polygon copied at rotated angles                   | energy, symmetry, star       |
+| `inscribed`  | circles and polygons alternately inscribed           | structure, nesting           |
+| `orbit`      | small satellites spaced on a large circle            | system, network, ecosystem   |
+| `stack`      | different shapes resting on one another              | assembly, balance            |
+| `arches`     | nested half-shapes on a shared baseline              | arch, shelter, sunset        |
+| `grid`       | 2×2 or 3×3 of one shape, often interlocking          | modularity, repetition       |
+| `rays`       | a central shape ringed by short radial segments      | sun, radiance, broadcast     |
+| `hatching`   | chords filling a shape, or parallel bands            | texture, layers, data        |
+| `chevrons`   | stacked Vs, alone or flanking a shape                | direction, progress, signal  |
+| `fan`        | segments converging on a point                       | convergence, beam, focus     |
+| `horizon`    | a half-shape over receding lines                     | landscape, calm, sun on water|
+| `ellipses`   | a circle flattened into narrowing ellipses           | planet, sphere, rotation     |
+| `phases`     | one shape repeated along the vertical axis           | cycle, sequence, moon phases |
+
+An unknown key throws from `generate()`; in a URL it is ignored with a console
+warning and defaults apply.
+
+## Two things that will bite you
+
+**Reproduce with `ruleInput`, not `rule`.** `state()` returns both: `rule` is the
+rule actually used, `ruleInput` is `auto` when the pick was left to chance. Under
+`auto` the seed also drives that pick, so replaying a seed with the *resolved*
+rule yields a different mark. The `url` field always carries the right pair.
+
+**`dark=1` draws near-white strokes.** Exports have a transparent background, so
+a dark-theme mark placed on a light page is invisible. Use `dark=0` for a mark
+that has to stand on its own.
