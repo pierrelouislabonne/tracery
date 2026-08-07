@@ -41,7 +41,7 @@ Use `toSVG()`, not `download()` — the latter triggers a browser download that 
 Every parameter is optional. Omitted, each keeps its default.
 
 ```
-https://pierrelouislabonne.github.io/tracery/?seed=8421&rule=orbit&dark=0
+https://pierrelouislabonne.github.io/tracery/?seed=8421&rule=orbit&dark=0&grid=0
 ```
 
 | Parameter | Values | Default |
@@ -99,6 +99,8 @@ const svg = tracery.toSVG();
 `state()` returns both `rule` — the rule actually used — and `ruleInput`, which is `auto` when the rule was left to chance. **Reproduce with `ruleInput`, not `rule`:** under `auto` the seed also drives the rule pick, so replaying a seed with the resolved rule yields a different mark. The `url` field always carries the correct combination.
 
 Exported SVGs have a **transparent background**, which is what you want when placing a mark on a surface you control. Bear in mind that a dark-theme mark is drawn in near-white strokes: standalone, on a light page, it will be invisible. Use `dark=0` for marks that need to stand on their own.
+
+The dotted grid, when enabled, **is part of the export**: with `grid=1` (the default) the SVG includes the backdrop dots. Set `grid=0` — or untick Grid — before exporting if you want the mark alone.
 
 ## Tech
 
